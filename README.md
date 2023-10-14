@@ -55,7 +55,7 @@ Additionally, this can and likely should be done in a Python Virtual Environment
 git clone https://github.com/rainmana/Anduril-Takehome
 ```
 
-**Change directories into Anduril-Takehome:**
+**Change directories into "Anduril-Takehome":**
 
 ```bash
 cd Anduril-Takehome
@@ -65,6 +65,12 @@ cd Anduril-Takehome
 
 ```bash
 python3 -m pip install requirements.txt
+```
+
+**Change directories into "app":**
+
+```bash
+cd app
 ```
 
 **For running the server in a local dev envrionment with "hot reloading", use the following from inside the "app" directory:**
@@ -100,8 +106,17 @@ git clone https://github.com/rainmana/Anduril-Takehome
 cd Anduril-Takehome
 ```
 
+**Build the Docker imagine from the included Dockerfile:**
 
+```bash
+docker build -t anduril-takehome .
+```
 
+**Run the docker container on your chosen port (I use "4000" here, but you likely will want something like "80"):**
+
+```bash
+docker run -p 4000:80 anduril-takehome
+```
 
 
 # Alec's Design Decisions
