@@ -44,10 +44,13 @@ def get_ips():
         ipv4_set = set(ipv4_list)
         ipv6_set = set(ipv6_list)
 
-# Get IP addresses initially, but then follow up every 24 hours using the threading module and seconds as the time
-# Note that at the moment, any removed IP addresses will be added back in after 24 hours (if they are still in the list)
+# Get IP addresses initially
 get_ips()
-threading.Timer(86400, get_ips).start()
+
+# follow up every 24 hours using the threading module and seconds as the time
+# Note that at the moment, any removed IP addresses will be added back in after 24 hours (if they are still in the list)
+## Commeting out this code to not go against the basic requirements of this app
+#threading.Timer(86400, get_ips).start()
 
 # Because there's no default route, instead of showing the user a non-descript error, I've chosen to show them a custom HTML page with simple instructions
 # We'll use a decorator like normal to define the route and specifiy the response type as HTMLResponse
@@ -71,6 +74,7 @@ def default_route():
     </html>
     """
     return HTMLResponse(content=html_content)
+
 # Create a FastAPI endpoint to reutrn a response as to wether an IP address is in the set or not and return a JSON response via decorator
 # This function will take in an IP address and return a JSON response as to wether or not it is in the IPv4 or IPv6 set
 ## Using this opporunity to learn/leverage "async" operations in Python and FastAPI to make the application more efficient
