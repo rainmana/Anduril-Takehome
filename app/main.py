@@ -6,6 +6,7 @@ by the Incident Reponse Team which I have placed in the README.
 # Import required libraries
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
+from fastapi.responses import HTMLResponse
 import requests
 import re
 import threading
@@ -48,6 +49,28 @@ def get_ips():
 get_ips()
 threading.Timer(86400, get_ips).start()
 
+# Because there's no default route, instead of showing the user a non-descript error, I've chosen to show them a custom HTML page with simple instructions
+# We'll use a decorator like normal to define the route and specifiy the response type as HTMLResponse
+@app.get("/", response_class=HTMLResponse)
+def default_route():
+    # We'll create a variable to contain some simple HTML to display to the user
+    html_content = """
+     <html>
+        <head>
+            <title>Alec's Anduril-Takehome Test App</title>
+        </head>
+        <body>
+            <h1>Welcome to Alec's Anduril-Takehome Test APP!</h1>
+            <p>Built by W. Alec Akin for an Anduril Interview, this application will get a list of known TOR IPs from Checkpoint, then let a user check to see if their IP is in the list (among other requirements).</p>
+            <ul>
+                <li><a href="/docs">API Documentation</a></li>
+                <li><a href="/openapi.json">OpenAPI Spec</a></li>
+                <li><a href="https://github.com/rainmana/Anduril-Takehome">GitHub Repository</a></li>
+            </ul>
+        </body>
+    </html>
+    """
+    return HTMLResponse(content=html_content)
 # Create a FastAPI endpoint to reutrn a response as to wether an IP address is in the set or not and return a JSON response via decorator
 # This function will take in an IP address and return a JSON response as to wether or not it is in the IPv4 or IPv6 set
 ## Using this opporunity to learn/leverage "async" operations in Python and FastAPI to make the application more efficient
