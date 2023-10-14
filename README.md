@@ -1,6 +1,8 @@
 # Anduril-Takehome
 This repository is to host the code for my Anudril Takehome test with instructions sent on Friday, October 13th and code submission due at 2:00 PM PST on October 24, 2023.
 
+**Demo App:** [https://anduril-takehome-production.up.railway.app](https://anduril-takehome-production.up.railway.app)
+
 # Instructions and Requirements
 
 ## SecEng Take Home
@@ -117,6 +119,12 @@ docker build -t anduril-takehome .
 ```bash
 docker run -p 4000:80 anduril-takehome
 ```
+
+## Running in the Cloud
+**Note:** These instructions will be specific to Railway which is an incredibly simple to use, and often times free way to host cloud projects. I choose it given the tight budget constraints and due to the free tier/credit system. If I were designing this as an enterprise application, I would use whatever the organization preferred (e.g. Google Cloud Platform, AWS, Azure, etc.).
+
+**Railway Demo App:** [https://anduril-takehome-production.up.railway.app](https://anduril-takehome-production.up.railway.app)
+
 
 
 # Alec's Design Decisions
