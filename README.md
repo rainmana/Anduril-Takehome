@@ -14,7 +14,7 @@ receive an acknowledgement if it is a Tor exit node
 
 ### Requirements
 
-- List of Tor exit nodes can be obtained from https://secureupdates.checkpoint.com/IP-list/TOR.txt
+- List of Tor exit nodes can be obtained from [https://secureupdates.checkpoint.com/IP-list/TOR.txt](https://secureupdates.checkpoint.com/IP-list/TOR.txt)
 - This list contains IPv4 and IPv6
 
 ### Expected functionality
@@ -30,12 +30,13 @@ receive an acknowledgement if it is a Tor exit node
 - Minimum supporting documentation (instructions to set up your program and how to make requests to your API)
 
 ### Time
+
 - 24hrs
 
 
 # Installation Procedures
-This application was designed with Docker in mind as a way to make it portable per the instructions given by Christian and the team, but it can be run locally as well.
 
+This application was designed with Docker in mind as a way to make it portable per the instructions given by Christian and the team, but it can be run locally as well.
 
 
 ## Running Locally
@@ -177,19 +178,19 @@ I went as simple as I possibly could go since I knew I'd be learning as I went f
 
 ### Default Route
 
-I realized during testing that the default route of "/" resulted in an error. I learned through FastAPI's docs that a simple HTML page can be shown instead, so I added some super simple HTML with links to various important areas of the API, as well as a quick description. I thought this could improve the overall "polish" of my project without incurring significant technical debt.
+I realized during testing that the default route of "`/`" resulted in an error. I learned through FastAPI's docs that a simple HTML page can be shown instead, so I added some super simple HTML with links to various important areas of the API, as well as a quick description. I thought this could improve the overall "polish" of my project without incurring significant technical debt.
 
 ### Searching for an IP
 
-To search for an IP, I created a FastAPI route for "/search_ip/" which allows the user to pass an IP (the human readable version) to this API endpoint. It then uses simple logic via an if/elif/else loop to check to see if the IP is in the ipv4_set, the ipv6_set, then returns a not found (respectively). For each stage of the if/elif/else logic, it will return a simple Python dictionary. I learned that FastAPI is smart enough to know to translate this into JSON which reduced time during developement as well as complexity.
+To search for an IP, I created a FastAPI route for "`/search_ip/"` which allows the user to pass an IP (the human readable version) to this API endpoint. It then uses simple logic via an if/elif/else loop to check to see if the IP is in the ipv4_set, the ipv6_set, then returns a not found (respectively). For each stage of the if/elif/else logic, it will return a simple Python dictionary. I learned that FastAPI is smart enough to know to translate this into JSON which reduced time during developement as well as complexity.
 
 ### Removing an IP
 
-To remove an IP, I created a FastAPI route for "/remove_ip/" which allows the user to pass an IP (the human readable version) to the API endpoint. Just like the "/search_ip/" endpoint, it uses if/elif/else logic to check wether the submitted value is in the ipv4_set or ipv6_set, or return "not found" if in neither.
+To remove an IP, I created a FastAPI route for "`/remove_ip/`" which allows the user to pass an IP (the human readable version) to the API endpoint. Just like the "`/search_ip/`" endpoint, it uses if/elif/else logic to check wether the submitted value is in the ipv4_set or ipv6_set, or return "not found" if in neither.
 
 ### Downloading All IPs
 
-To download all IP addresses the application current has in memory, I created a FastAPI route that simply returns a JSONResponse (something FastAPI can handle natively) which contains nested JSON describing a set of the IPv4 addresses as well as the IPv6 addresses by adding the respective set's data to the returned JSON content. I included headers to instruct the browser to download this document as a file instead of just displaying it in a new tab.
+To download all IP addresses the application current has in memory, I created a FastAPI route that simply returns a `JSONResponse` object (something FastAPI can handle natively) which contains nested JSON describing a set of the IPv4 addresses as well as the IPv6 addresses by adding the respective set's data to the returned JSON content. I included headers to instruct the browser to download this document as a file instead of just displaying it in a new tab.
 
 
 ## Portability
@@ -199,7 +200,10 @@ I am most familiar with Docker, so I chose Docker as the way to make this portab
 
 ## Future Improvements
 
-
+- Add HTTPS via a reverse proxy or some type of middleware. HTTPS could help by increasing the trust and integrity in the data returned from the API. Additionally, more integrity checking could be added by computing hash values of the entirety of the downloaded Checkpoint data, inclusion of a date, etc. to further improve overall trust in the data
+- Add a way for the user to remove an IP, but notate it later if the newest Checkpoint list would replace it that way my "refresh every 24 hours" functionality wouldn't go unused
+- Consider adding a database backend vs storing all data in volatile memory. I chose the volatile memory direction given the time limitation and my lack of experience when writing applications leveraging databases
+- Consider deployment to services like AWS, GCP, or Azure during the design process to make the re-usability more centered toward the enterprise
 
 
 
