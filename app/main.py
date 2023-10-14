@@ -9,16 +9,17 @@ from fastapi.responses import JSONResponse
 import requests
 import re
 import threading
-import json
 
 # Initialize the fastapi app
 app = FastAPI()
 
 # Create an empty set to store the IPv4 and IPv6 addresses
+# I've chosen to use a set because it is more efficient than a list and will not allow duplicates
 ipv4_set = set()
 ipv6_set = set()
 
 # Create a function to get the IP addresses from the URL provided by the team
+# This function is used later to update the set of IP addresses every 24 hours
 def get_ips():
     global ipv4_set, ipv6_set
 
@@ -30,9 +31,12 @@ def get_ips():
     # Check the status code of the response and if it is 200, then continue
     if response.status_code == 200:
         # Create a list of IPv4 addresses found in the response.text via regex
+        # This will make it easier to handle the data and update the set, but relies on the assumption that the data will always be in the same format
         ipv4_list = re.findall(r'\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b', response.text)
 
         # Create a list of IPv6 addresses found in the response.text via regex
+        # This will make it easier to handle IPv6 addresses and update the set, but relies on the assumption that the data will always be in the same format
+        # Additonally, this strips the leading and following brackets from the IPv6 addresses to make it easier to handle when querying the API later
         ipv6_list = re.findall(r'\b(?:[A-Fa-f0-9]{1,4}:){7}[A-Fa-f0-9]{1,4}\b', response.text)
 
         # Update the set with both lists
@@ -40,6 +44,7 @@ def get_ips():
         ipv6_set = set(ipv6_list)
 
 # Get IP addresses initially, but then follow up every 24 hours using the threading module and seconds as the time
+# Note that at the moment, any removed IP addresses will be added back in after 24 hours (if they are still in the list)
 get_ips()
 threading.Timer(86400, get_ips).start()
 
@@ -58,7 +63,8 @@ async def search_ip(ip: str):
     else:
         return {"status": "not found", "ip": ip}
 
-# Create a FastAPI endpoint to allow the deletion of an IP address from the appropriate set and return a JSON response via decorator
+# Create a FastAPI endpoint to allow the deletion of an IP address from the appropriate set and return a JSON response via decorator as FastAPI requires
+# Note that this function will only remove the IP address from the set for 24 hours as the get_ips() function will add it back in (if present in Checkpoints' txt file)
 ## Using this opporunity to learn/leverage "async" operations in Python and FastAPI to make the application more efficient
 @app.delete("/remove_ip/")
 async def remove_ip(ip: str):
@@ -74,3 +80,9 @@ async def remove_ip(ip: str):
     else:
         return {"status": "not found", "ip": ip}
 
+# Create a FastAPI endpoint to allow the download of both IPv4 and IPv6 sets and return a JSON response via decorator
+@app.get("/download_ips/")
+async def download_ips():
+    # I'm using the "JSONResponse" function to return a JSON response with the apppropriate headers to instruct the browser to download the file
+    # I also learned through this process that FastAPI is smart enough to know that the content is JSON and will automatically format it as such when using Python dicts like above
+    return JSONResponse(content={"IPv4": list(ipv4_set), "IPv6": list(ipv6_set)}, headers={"Content-Disposition": "attachment; filename=TOR_ips.json"})
