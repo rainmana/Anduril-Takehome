@@ -116,15 +116,26 @@ async def search_ip(ip: str):
     
     # Check to see if the IP address is in the IPv4 set and if it is, return a JSON response with the IP address and that it was found
     if ip in ipv4_set:
-        return {"status": "found", "ip": ip, "type": "IPv4"}
+        return {
+            "status": "found",
+            "ip": ip,
+            "type": "IPv4"
+            }
     
     # If the IP is not in the IPv4 set, check whether or not it's in the IPv6 list
     elif ip in ipv6_set:
-        return {"status": "found", "ip": ip, "type": "IPv6"}
+        return {
+            "status": "found",
+            "ip": ip,
+            "type": "IPv6"
+            }
     
     # If the IP is not in either set, return a JSON response with the IP address and that it was not found
     else:
-        return {"status": "not found", "ip": ip}
+        return {
+            "status": "not found",
+            "ip": ip
+            }
 
 # Create a FastAPI endpoint to allow the deletion of an IP address from the appropriate set and return a JSON response via decorator as FastAPI requires
 # Note that this function will only remove the IP address from the set for 24 hours as the get_ips() function will add it back in (if present in Checkpoints' txt file)
@@ -152,7 +163,11 @@ async def remove_ip(ip: str):
         
         # Add the IP address to a secondary set to keep track of removed IPv4 addresses and return JSON response
         removed_ipv4_set.add(ip)
-        return {"status": "removeed", "ip": ip, "type": "IPv4"}
+        return {
+            "status": "removeed",
+            "ip": ip,
+            "type": "IPv4"
+            }
     
     # If the IP is not in the IPv4 set, check whether or not it's in the IPv6 list
     elif ip in ipv6_set:
@@ -162,20 +177,71 @@ async def remove_ip(ip: str):
         
         # Add the IP address to a secondary set to keep track of removed IPv6 addresses and return JSON response
         removed_ipv6_set.add(ip)
-        return {"status": "removed", "ip": ip, "type": "IPv6"}
+        return {
+            "status": "removed",
+            "ip": ip,
+            "type": "IPv6"
+            }
     
     # If the IP is not in either set, return a JSON response with the IP address and that it was not found
     else:
         return {"status": "not found", "ip": ip}
 
-# Create a FastAPI endpoint to allow the download of both IPv4 and IPv6 sets and return a JSON response via decorator
+# I've added this endpoint to allow the user to refresh the IP addresses in the dataset manually.
+# This will also return a count of the number of new IPs added to the set.
+@app.get("/refresh_ips/", summary="Manually refresh the IP addresses in the dataset.")
+async def refresh_ips():
+    """
+    Manually refresh the IP addresses in the dataset. This function will manually refresh the IP addresses in the dataset and return how many
+    new IPv4 and IPv6 addresses were added to the set as JSON.
+    """
+
+    # Store the current size of the sets already in existence
+    initial_ipv4_size = len(ipv4_set)
+    initial_ipv6_size = len(ipv6_set)
+
+    # Call the get_ips() function to refresh the IPs
+    get_ips()
+
+    # Calculate the number of new IPs added by subtracting the initial size from the new size
+    new_ipv4_added = len(ipv4_set) - initial_ipv4_size
+    new_ipv6_added = len(ipv6_set) - initial_ipv6_size
+
+    return {
+        "status": "refreshed",
+        "new_ipv4_added": new_ipv4_added,
+        "new_ipv6_added": new_ipv6_added
+        }
+
+@app.get("/list_removed_ips/", summary="List the IPv4 and IPv6 addresses that have been removed from the dataset.")
+async def list_removed_ips():
+    """
+    List the IPv4 and IPv6 addresses that have been removed from the dataset.
+    This function will return a JSON response with the IPv4 and IPv6 addresses that have been removed by the user via the "/remove_ip/" endpoint.
+    """
+    return {
+        "Removed_IPv4": list(removed_ipv4_set),
+        "Removed_IPv6": list(removed_ipv6_set)
+        }
+
+# I've added a FastAPI endpoint to allow the download of both IPv4 and IPv6 sets and return a JSON response via decorator as provided in the instructions
 @app.get("/download_ips/", summary="Download the IPv4 and IPv6 sets as a JSON file.")
 async def download_ips():
     """
-    Download the IPv4 and IPv6 sets as a JSON file. This function will return a JSON response with the IPv4 and IPv6 sets as a JSON file.
+    This function will return a JSON response with the IPv4 and IPv6 sets as a JSON file.
     Respective IPv4 and IPv6 addresses will be stored in a nested structure denoting each type of IP address.
+    Additionally, this will also include the IPv4 and IPv6 addresses that have been removed by the user via API call and store those
+    in a nested structure denoting each type of IP address and the addresses themselves.
     """
     
     # I'm using the "JSONResponse" function to return a JSON response with the apppropriate headers to instruct the browser to download the file
     # I also learned through this process that FastAPI is smart enough to know that the content is JSON and will automatically format it as such when using Python dicts like above
-    return JSONResponse(content={"IPv4": list(ipv4_set), "IPv6": list(ipv6_set)}, headers={"Content-Disposition": "attachment; filename=TOR_ips.json"})
+    return JSONResponse(
+        content={
+            "IPv4": list(ipv4_set),
+            "IPv6": list(ipv6_set),
+            "Removed_IPv4": list(removed_ipv4_set),
+            "Removed_IPv6": list(removed_ipv6_set)
+        },
+        headers={"Content-Disposition": "attachment; filename=TOR_ips.json"}
+    )
