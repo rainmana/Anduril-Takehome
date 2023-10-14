@@ -174,11 +174,11 @@ I used pipreqs to generate the requirements file, though it was missing uvicorn 
 
 ### Getting Checkpoint's List of TOR IPs
 
-I went as simple as I possibly could go since I knew I'd be learning as I went for several technologies in this stack. I used a simple Python requests function to go out to the Checkpoint site and grab the IP addresses and add them to a respective ipv4_set or ipv6_set by leveraging simple, known regular expressions for these particular versions of IP. When data matches the IP address type, it adds it to the respective set to be used later. Since this was also created as a function, I could use Python's threading module to run the function ever 86400 seconds to give the data refresh every 24 hours which was another opportunity for me to learn something since I'd not used threading before. The downside to this approach is that when a user users the "remove_ip" route, if that same IP exists in Checkpoint's new list, it will replace it. This line can be commented in/out and I may leave it commented out for submission so that it doesn't detract from the overall goals of the project.
+I went as simple as I possibly could go since I knew I'd be learning as I went for several technologies in this stack. I used a simple Python requests function to go out to the Checkpoint site and grab the IP addresses and add them to a respective ipv4_set or ipv6_set by leveraging simple, known regular expressions for these particular versions of IP. When data matches the IP address type, it adds it to the respective set to be used later. Since this was also created as a function, I could use Python's threading module to run the function ever 86400 seconds to give the data refresh every 24 hours which was another opportunity for me to learn something since I'd not used threading before. Additionally, the program should ignore any of the removed IPs the user has manually added.
 
 ### Default Route
 
-I realized during testing that the default route of "`/`" resulted in an error. I learned through FastAPI's docs that a simple HTML page can be shown instead, so I added some super simple HTML with links to various important areas of the API, as well as a quick description. I thought this could improve the overall "polish" of my project without incurring significant technical debt.
+I realized during testing that the default route of "`/`" resulted in an error. I learned through FastAPI's docs that a simple HTML page can be shown instead, so I added some super simple HTML with links to various important areas of the API, as well as a quick description. I thought this could improve the overall "polish" of my project without incurring significant technical debt which is why I also used MVP.css which was a single line to add.
 
 ### Searching for an IP
 
@@ -190,7 +190,14 @@ To remove an IP, I created a FastAPI route for "`/remove_ip/`" which allows the 
 
 ### Downloading All IPs
 
-To download all IP addresses the application current has in memory, I created a FastAPI route that simply returns a `JSONResponse` object (something FastAPI can handle natively) which contains nested JSON describing a set of the IPv4 addresses as well as the IPv6 addresses by adding the respective set's data to the returned JSON content. I included headers to instruct the browser to download this document as a file instead of just displaying it in a new tab.
+To download all IP addresses (include the removed addresses) the application current has in memory, I created a FastAPI route that simply returns a `JSONResponse` object (something FastAPI can handle natively) which contains nested JSON describing a set of the IPv4 addresses as well as the IPv6 addresses by adding the respective set's data to the returned JSON content. I included headers to instruct the browser to download this document as a file instead of just displaying it in a new tab.
+
+## Additional Routes
+### Refresh IP
+I added a route which will all the user to manually refresh the list of IPs while also ignoring any IPs that they have removed. This can help enable better testing.
+
+### List Removed IPs
+I also added another function which will return a list of the IPv4 and IPv6 addresses that the user has chose to manually remove so they can check what's been removed.
 
 
 ## Portability
@@ -201,9 +208,152 @@ I am most familiar with Docker, so I chose Docker as the way to make this portab
 ## Future Improvements
 
 - Add HTTPS via a reverse proxy or some type of middleware. HTTPS could help by increasing the trust and integrity in the data returned from the API. Additionally, more integrity checking could be added by computing hash values of the entirety of the downloaded Checkpoint data, inclusion of a date, etc. to further improve overall trust in the data
-- Add a way for the user to remove an IP, but notate it later if the newest Checkpoint list would replace it that way my "refresh every 24 hours" functionality wouldn't go unused
 - Consider adding a database backend vs storing all data in volatile memory. I chose the volatile memory direction given the time limitation and my lack of experience when writing applications leveraging databases
 - Consider deployment to services like AWS, GCP, or Azure during the design process to make the re-usability more centered toward the enterprise
+- Provide another route for the user to manually add IPs the dataset
 
 
+# API Docs
+
+## FastAPI
+## Version: 0.1.0
+
+### /
+
+#### GET
+##### Summary:
+
+The default route for the application.
+
+##### Description:
+
+This is the default route for the application. It will display links to resources for the application/API, such
+as the Swagger UI, OpenAPI Spec, and GitHub repository along with a short description. It uses MVP.css for styling.
+
+##### Responses
+
+| Code | Description |
+| ---- | ----------- |
+| 200 | Successful Response |
+
+### /search_ip/
+
+#### GET
+##### Summary:
+
+Search for an IP address.
+
+##### Description:
+
+Search for an IP address in a set of known TOR IP addresses. This function will take in an IP address in it's human readable format
+and return a JSON response as to wether or not it is in the IPv4 or IPv6 set.
+
+Please use the following format for the IP address:
+- IPv4:
+    - 10.10.10.10
+
+- IPv6:
+    - 2001:0db8:85a3:0000:0000:8a2e:0370:7334
+
+##### Parameters
+
+| Name | Located in | Description | Required | Schema |
+| ---- | ---------- | ----------- | -------- | ---- |
+| ip | query |  | Yes | string |
+
+##### Responses
+
+| Code | Description |
+| ---- | ----------- |
+| 200 | Successful Response |
+| 422 | Validation Error |
+
+### /remove_ip/
+
+#### DELETE
+##### Summary:
+
+Remove an IP address from the set.
+
+##### Description:
+
+Remove an IP address from the set of known TOR IP addresses. This function will take in an IP address in it's human readable format.
+This will also ensure that when the dataset updates every 24 hours, the IP address will not be added back in. Note that this will only
+persist as the machine is running as all sets are stored in volatile memory, a database or similar could be used to persist this data.
+
+Please use the following format for the IP address:
+- IPv4:
+    - 10.10.10.10
+
+- IPv6:
+    - 2001:0db8:85a3:0000:0000:8a2e:0370:7334
+
+##### Parameters
+
+| Name | Located in | Description | Required | Schema |
+| ---- | ---------- | ----------- | -------- | ---- |
+| ip | query |  | Yes | string |
+
+##### Responses
+
+| Code | Description |
+| ---- | ----------- |
+| 200 | Successful Response |
+| 422 | Validation Error |
+
+### /refresh_ips/
+
+#### GET
+##### Summary:
+
+Manually refresh the IP addresses in the dataset.
+
+##### Description:
+
+Manually refresh the IP addresses in the dataset. This function will manually refresh the IP addresses in the dataset and return how many
+new IPv4 and IPv6 addresses were added to the set as JSON.
+
+##### Responses
+
+| Code | Description |
+| ---- | ----------- |
+| 200 | Successful Response |
+
+### /list_removed_ips/
+
+#### GET
+##### Summary:
+
+List the IPv4 and IPv6 addresses that have been removed from the dataset.
+
+##### Description:
+
+List the IPv4 and IPv6 addresses that have been removed from the dataset.
+This function will return a JSON response with the IPv4 and IPv6 addresses that have been removed by the user via the "/remove_ip/" endpoint.
+
+##### Responses
+
+| Code | Description |
+| ---- | ----------- |
+| 200 | Successful Response |
+
+### /download_ips/
+
+#### GET
+##### Summary:
+
+Download the IPv4 and IPv6 sets as a JSON file.
+
+##### Description:
+
+This function will return a JSON response with the IPv4 and IPv6 sets as a JSON file.
+Respective IPv4 and IPv6 addresses will be stored in a nested structure denoting each type of IP address.
+Additionally, this will also include the IPv4 and IPv6 addresses that have been removed by the user via API call and store those
+in a nested structure denoting each type of IP address and the addresses themselves.
+
+##### Responses
+
+| Code | Description |
+| ---- | ----------- |
+| 200 | Successful Response |
 
